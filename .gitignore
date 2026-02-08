@@ -1,0 +1,29 @@
+node_modules
+backend/data
+dist
+.env
+.env.local
+.env.*.local
+*.log
+.DS_Store
+coverage
+.vscode
+.idea
+__pycache__
+*.pyc
+*.pyo
+
+# Never commit secrets
+backend/.env
+frontend/.env
+
+# ML models (too large for GitHub; download separately - see README)
+models/
+
+# Ignore large datasets
+dataset/*.csv
+
+# Temporary Scripts
+git_backdate.py
+generate_notebooks.py
+.coverage

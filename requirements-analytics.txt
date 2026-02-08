@@ -1,0 +1,15 @@
+matplotlib>=3.8
+scipy>=1.12
+scikit-learn>=1.4
+pandas>=2.1
+duckdb>=1.0
+wordcloud>=1.9
+pyLDAvis>=3.4
+gensim>=4.3
+textstat>=0.7
+plotly>=5.18
+shap>=0.45
+transformers-interpret>=0.10
+pytest>=8.0
+pytest-cov>=5.0
+pytest-mock>=3.14
