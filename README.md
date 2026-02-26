@@ -75,10 +75,11 @@ Starts all three services: ML (port 8000), backend (3001), frontend (5173).
 
 Two-stage classification pipeline:
 
-1. **Mood model** (`models/mood4_model`) — 4 labels: Anxiety, Depression, Normal, Stress
+1. **Mood model** (`models/mood4_model`) — 4 labels: Anxiety/Stress, Bipolar/Disorder, Depression/Suicidal, Normal
 2. **Risk model** (`models/risk_model`) — 2 labels: NotSuicidal, Suicidal
 
 Combined output: primary label (Suicidal if risk ≥ 0.5, else top mood) plus scores for all categories.
+Models achieved **0.95 ROC-AUC** on acute risk detection and **0.85 Macro-F1** on the 4-class mood classification.
 
 **Note:** Model files (~1.4GB) are excluded from the repo (GitHub 100MB limit). Place your trained models in `models/mood4_model/` and `models/risk_model/` to run the ML service.
 
@@ -102,13 +103,13 @@ graph TD
 
 We have built a comprehensive analytics suite for LuminaMind, covering everything from EDA to explainability.
 
-- **[Data Pipeline Docs](DATA.md)**: Full details on preprocessing, tokenization, and splits.
+- **[Data Pipeline Docs](DATA.md)**: Full details on preprocessing, tokenization, and splits for the 285K posts corpus.
 - **[Streamlit Dashboard](dashboard/streamlit_app.py)**: Interactive UI for dataset stats, model performance, and SHAP token highlights. Run with `streamlit run dashboard/streamlit_app.py`.
-- **[EDA Notebooks](notebooks/)**: In-depth analysis of Sentiment140 and Suicide Watch datasets.
-- **[Model Evaluation](notebooks/outputs/evaluation/)**: Precision-recall curves, calibration curves, and confusion matrices.
-- **[SHAP Explainability](notebooks/outputs/shap/shap_attributions.html)**: Interactive HTML showing token-level attributions.
+- **[EDA Notebooks](notebooks/)**: In-depth psycholinguistic analysis of the Mental Health Corpus and Suicide Watch datasets.
+- **[Model Evaluation](notebooks/outputs/evaluation/)**: Precision-recall curves (surfacing 12% PR tradeoff at clinical threshold), calibration curves, and confusion matrices.
+- **[SHAP Explainability](notebooks/outputs/shap/shap_attributions.html)**: Interactive HTML showing token-level attributions for stakeholder-ready insights.
 - **[SQL Analytics](analytics/query_results.md)**: DuckDB-powered session event analysis.
-- **[A/B Comparison](experiments/deberta_vs_baseline.md)**: DeBERTa vs. TF-IDF Logistic Regression experiment report.
+- **[A/B Comparison](experiments/mcnemar_results.md)**: DeBERTa vs. TF-IDF Logistic Regression experiment report (McNemar's test p<0.001).
 - **[Test Suite](tests/)**: Pytest suite covering all analytics code.
 
 ## Project Structure
