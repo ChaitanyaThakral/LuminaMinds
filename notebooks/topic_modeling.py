@@ -77,11 +77,12 @@ def train_lda(
     num_topics: int = NUM_TOPICS,
     passes: int = 10,
     random_state: int = 42,
+    no_below: int = 20,
 ) -> tuple[models.LdaModel, corpora.Dictionary, list]:
     """Train an LDA model on tokenized documents."""
     dictionary = corpora.Dictionary(tokenized_docs)
-    # Filter extremes
-    dictionary.filter_extremes(no_below=20, no_above=0.5)
+    # Filter extremes — use no_below=1 for tiny test corpora
+    dictionary.filter_extremes(no_below=no_below, no_above=0.5)
     corpus = [dictionary.doc2bow(doc) for doc in tokenized_docs]
 
     lda_model = models.LdaModel(

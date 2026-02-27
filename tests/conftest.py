@@ -3,7 +3,7 @@ from __future__ import annotations
 Shared pytest fixtures for LuminaMind test suite.
 
 Provides small synthetic DataFrames and mocks so tests
-don't depend on the full 1.6M/232K CSV datasets.
+don't depend on the full 53K/232K CSV datasets.
 """
 
 import sys
@@ -13,21 +13,37 @@ from unittest.mock import MagicMock
 # --- GLOBAL TRANSFORMERS MOCK ---
 mock_hf = MagicMock()
 mock_tokenizer = MagicMock()
-mock_tokenizer.return_value = {"input_ids": torch.tensor([[1,2,3]]), "attention_mask": torch.tensor([[1,1,1]])}
+
+def _dynamic_tokenizer(*args, **kwargs):
+    """Return input_ids sized to the actual input batch."""
+    texts = args[0] if args else ["dummy"]
+    bsz = len(texts) if isinstance(texts, (list, tuple)) else 1
+    return {
+        "input_ids": torch.ones((bsz, 3), dtype=torch.long),
+        "attention_mask": torch.ones((bsz, 3), dtype=torch.long),
+    }
+
+mock_tokenizer.side_effect = _dynamic_tokenizer
 mock_tokenizer.convert_ids_to_tokens.return_value = ["he", "##llo", "world"]
 mock_hf.AutoTokenizer.from_pretrained.return_value = mock_tokenizer
 
 mock_model = MagicMock()
-class MockOutput:
-    logits = torch.tensor([[0.2, 0.8]])
-mock_model.return_value = MockOutput()
+class _GlobalMockOutput:
+    def __init__(self, bsz: int):
+        self.logits = torch.full((bsz, 2), 0.0)
+        self.logits[:, 1] = 0.8  # second class score
+
+def _mock_model_call(**kwargs):
+    bsz = kwargs.get('input_ids', torch.tensor([[1]])).shape[0]
+    return _GlobalMockOutput(bsz)
+
+mock_model.side_effect = _mock_model_call
 mock_model.eval = MagicMock()
 mock_hf.AutoModelForSequenceClassification.from_pretrained.return_value = mock_model
 
 sys.modules['transformers'] = mock_hf
 sys.modules['transformers_interpret'] = MagicMock()
 # --------------------------------
-
 
 
 import tempfile
@@ -39,63 +55,47 @@ import pytest
 
 
 # ---------------------------------------------------------------------------
-# Sentiment140 fixture (50 rows)
+# Mental Health Corpus fixture (80 rows, 4 mood classes)
 # ---------------------------------------------------------------------------
 
 @pytest.fixture
-def sentiment140_df() -> pd.DataFrame:
-    """Synthetic Sentiment140 DataFrame with 50 rows."""
-    rng = np.random.RandomState(42)
-    n = 50
-    dates_pool = [
-        "Mon Apr 06 22:19:45 PDT 2009",
-        "Tue Apr 07 08:30:00 PDT 2009",
-        "Wed Apr 08 14:45:30 PDT 2009",
-        "Thu Apr 09 03:12:00 PDT 2009",
-        "Fri Apr 10 18:00:00 PDT 2009",
-        "Sat Apr 11 09:00:00 PDT 2009",
-        "Sun Apr 12 21:30:00 PDT 2009",
-    ]
-
-    neg_texts = [
-        "I hate this so much, it makes me sad :(",
-        "worst day ever can't believe it happened!!",
-        "feeling down and depressed today...",
-        "this is NOT okay, really upset right now",
-        "terrible experience https://example.com/bad",
-        "I'm so angry I could scream!!!",
-        "nothing ever works out for me",
-        "why does everything go wrong always",
-        "can't stop crying, this is awful",
-        "HATE this stupid thing so much",
-    ]
-
-    pos_texts = [
-        "what a beautiful day! love it :)",
-        "so happy and grateful today!!!",
-        "amazing experience, highly recommend",
-        "feeling great, life is wonderful",
-        "best day ever, couldn't be happier",
-        "love spending time with friends :D",
-        "everything is going perfectly today",
-        "such a lovely surprise, thank you!",
-        "incredible news, so excited!!",
-        "wonderful day at the park, blessed",
-    ]
-
-    targets = [0] * 25 + [4] * 25
-    texts = [neg_texts[i % len(neg_texts)] for i in range(25)] + \
-            [pos_texts[i % len(pos_texts)] for i in range(25)]
-    dates = [dates_pool[i % len(dates_pool)] for i in range(n)]
-
-    df = pd.DataFrame({
-        "target": targets,
-        "id": range(1000, 1000 + n),
-        "date": dates,
-        "flag": "NO_QUERY",
-        "user": [f"user_{i}" for i in range(n)],
-        "text": texts,
-    })
+def mental_health_df() -> pd.DataFrame:
+    """Synthetic mental health corpus DataFrame with 80 rows across 4 mood classes."""
+    texts = {
+        "Normal": [
+            "Had a great day, feeling productive and happy.",
+            "Went for a walk in the park, lovely weather today.",
+            "Cooked a new recipe, turned out amazing!",
+            "Spent time with family, feeling grateful.",
+            "Reading a good book, really enjoying it.",
+        ],
+        "Depression/Suicidal": [
+            "I can't take this pain anymore, everything feels hopeless.",
+            "Nobody cares, I just want it all to stop.",
+            "I've been crying for days, nothing helps.",
+            "I feel completely empty and alone inside.",
+            "There is no point in going on anymore.",
+        ],
+        "Anxiety/Stress": [
+            "I'm so stressed about the exam, can't sleep at all.",
+            "My heart won't stop racing, I'm so anxious.",
+            "Overwhelmed by everything, can't focus on anything.",
+            "The deadline is tomorrow and I'm panicking completely.",
+            "I keep worrying about things that might never happen.",
+        ],
+        "Bipolar/Disorder": [
+            "I feel amazing today, I could conquer the world!",
+            "Yesterday I was on top of the world, today I hate everything.",
+            "My mood swings are so unpredictable lately.",
+            "I haven't slept in days but I feel so energised.",
+            "I can't understand my own feelings anymore.",
+        ],
+    }
+    rows = []
+    for mood, txts in texts.items():
+        for t in txts * 4:  # 20 per class = 80 total
+            rows.append({"text": t, "mood_class": mood, "status": mood})
+    df = pd.DataFrame(rows)
     return df.sample(frac=1, random_state=42).reset_index(drop=True)
 
 
@@ -172,7 +172,7 @@ def mock_model_and_tokenizer():
     """Load a completely mocked model and tokenizer for testing."""
     from unittest.mock import MagicMock
     import torch
-    
+
     tokenizer = MagicMock()
     tokenizer.return_value = {"input_ids": torch.tensor([[1, 2, 3]]), "attention_mask": torch.tensor([[1, 1, 1]])}
     tokenizer.convert_ids_to_tokens.return_value = ["he", "##llo", "world"]
@@ -182,8 +182,8 @@ def mock_model_and_tokenizer():
         def __init__(self, kwargs):
             bsz = kwargs.get('input_ids', torch.tensor([[1]])).shape[0]
             self.logits = torch.randn(bsz, 2)
-            
+
     model.side_effect = lambda **kwargs: MockOutput(kwargs)
     model.eval = MagicMock()
-    
+
     return model, tokenizer

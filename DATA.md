@@ -4,20 +4,26 @@
 
 | Dataset | Source | Size | Records | Format |
 |---------|--------|------|---------|--------|
-| **Sentiment140** | [Kaggle](https://www.kaggle.com/datasets/kazanova/sentiment140) | ~239 MB | 1,600,000 tweets | CSV (Latin-1 encoded, no header), named `sentiment140.csv` |
+| **Mental Health Corpus** | [Kaggle](https://www.kaggle.com/datasets/suchintikasarkar/sentiment-analysis-for-mental-health) | ~30 MB | 53,043 posts | CSV (UTF-8), named `mental_health_corpus.csv` |
 | **Suicide Detection** | [Kaggle](https://www.kaggle.com/datasets/nikhileswarkomati/suicide-watch) | ~167 MB | 232,074 posts | CSV (UTF-8, with header), named `suicide_watch.csv` |
 
 ## Raw Schema
 
-### Sentiment140
-| Column | Name | Description |
-|--------|------|-------------|
-| 0 | `target` | Sentiment label: 0 = negative, 4 = positive |
-| 1 | `id` | Tweet ID |
-| 2 | `date` | Timestamp (e.g., `Mon Apr 06 22:19:45 PDT 2009`) |
-| 3 | `flag` | Query string (always `NO_QUERY`) |
-| 4 | `user` | Twitter username |
-| 5 | `text` | Tweet content |
+### Mental Health Corpus
+| Column | Description |
+|--------|-------------|
+| `statement` | Post or social media text (Reddit, Twitter, etc.) |
+| `status` | Original 7-class label (Normal, Depression, Suicidal, Anxiety, Stress, Bipolar, Personality disorder) |
+
+#### 4-Class Macro Mapping
+The 7 original labels are merged into 4 macro mood classes for classification:
+
+| Original Labels | Macro Class |
+|----------------|-------------|
+| Normal | `Normal` |
+| Depression, Suicidal | `Depression/Suicidal` |
+| Anxiety, Stress | `Anxiety/Stress` |
+| Bipolar, Personality disorder | `Bipolar/Disorder` |
 
 ### Suicide Detection
 | Column | Description |
@@ -31,8 +37,7 @@
 1. **URL removal**: Regex `https?://\S+` and `www\.\S+` → removed
 2. **Whitespace normalization**: Multiple spaces/newlines → single space, strip leading/trailing
 3. **Deduplication**: Not applied (datasets are pre-deduplicated from source)
-4. **Encoding**: Sentiment140 read with `latin-1` encoding; Suicide Detection with `utf-8`
-5. **Missing values**: Rows with empty `text` field are dropped
+4. **Missing values**: Rows with empty `text` or `status` field are dropped
 
 ## Tokenization
 
@@ -43,15 +48,17 @@
 
 ## Label Encoding
 
-### Mood Model (4-class)
+### Mood Model (4-class — Mental Health Corpus)
 | Index | Label |
 |-------|-------|
-| 0 | Anxiety |
-| 1 | Depression |
-| 2 | Normal |
-| 3 | Stress |
+| 0 | Anxiety/Stress |
+| 1 | Bipolar/Disorder |
+| 2 | Depression/Suicidal |
+| 3 | Normal |
 
-### Risk Model (2-class)
+**Macro-F1: 0.85 · Weighted-F1: 0.90 · ROC-AUC (OvR): 0.98**
+
+### Risk Model (2-class — Suicide Detection)
 | Index | Label |
 |-------|-------|
 | 0 | NotSuicidal |
@@ -68,11 +75,11 @@ Suicide Detection `class` mapping: `suicide` → 1 (Suicidal), `non-suicide` →
 
 **Random seed**: 42 for reproducibility.
 
-### Sentiment140 Split Sizes
-| Split | Negative (0) | Positive (4) | Total |
-|-------|-------------|-------------|-------|
-| Train | ~640,000 | ~640,000 | ~1,280,000 |
-| Test | ~160,000 | ~160,000 | ~320,000 |
+### Mental Health Corpus Split Sizes
+| Split | Normal | Depression/Suicidal | Anxiety/Stress | Bipolar/Disorder | Total |
+|-------|--------|---------------------|----------------|-----------------|-------|
+| Train | ~13,081 | ~20,846 | ~5,246 | ~3,225 | ~42,398 |
+| Test  | ~3,270  | ~5,211  | ~1,311 | ~807   | ~10,599 |
 
 ### Suicide Detection Split Sizes
 | Split | Non-Suicide | Suicide | Total |
@@ -82,7 +89,7 @@ Suicide Detection `class` mapping: `suicide` → 1 (Suicidal), `non-suicide` →
 
 ## Class Weights
 
-Both datasets are **balanced** (equal number of samples per class), so no class weights were applied during training. The loss function uses uniform weights.
+The Mental Health Corpus is **imbalanced** (Normal and Depression/Suicidal are larger classes). The TF-IDF+LogReg baseline uses `class_weight=None` (uniform) — future work can explore balanced weighting. The Suicide Watch dataset is balanced (equal samples per class).
 
 ## Inference Pipeline
 

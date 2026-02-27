@@ -1,5 +1,6 @@
 """Tests for notebooks/topic_modeling.py"""
 
+import numpy as np
 import pandas as pd
 import pytest
 from pathlib import Path
@@ -55,12 +56,12 @@ class TestLDAModeling:
             ["sad", "lonely", "depressed"],
             ["money", "debt", "financial", "ruin"],
         ] * 30
-        lda, _, _ = train_lda(docs, num_topics=2, passes=2)
+        lda, _, _ = train_lda(docs, num_topics=2, passes=2, no_below=1)
         topics = get_topic_terms(lda, num_words=2)
         assert len(topics) == 2
         assert len(topics[0]) == 2
         assert isinstance(topics[0][0][0], str)
-        assert isinstance(topics[0][0][1], float)
+        assert isinstance(topics[0][0][1], (float, np.floating))
 
 
 class TestVisualization:

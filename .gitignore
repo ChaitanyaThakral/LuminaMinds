@@ -27,3 +27,5 @@ dataset/*.csv
 git_backdate.py
 generate_notebooks.py
 .coverage
+
+dataset/sentiment140.csv

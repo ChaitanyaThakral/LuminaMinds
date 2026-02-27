@@ -46,12 +46,10 @@ OUTPUTS = PROJECT_ROOT / "notebooks" / "outputs"
 # ---------------------------------------------------------------------------
 
 @st.cache_data
-def load_sentiment140_sample():
-    path = PROJECT_ROOT / "dataset" / "sentiment140.csv"
+def load_mental_health_sample():
+    path = PROJECT_ROOT / "dataset" / "mental_health_corpus.csv"
     if path.exists():
-        df = pd.read_csv(path, encoding="latin-1", header=None,
-                         names=["target", "id", "date", "flag", "user", "text"],
-                         nrows=50000)
+        df = pd.read_csv(path, nrows=5000)
         return df
     return None
 
@@ -107,14 +105,14 @@ def render_dataset_stats():
     col1, col2 = st.columns(2)
 
     with col1:
-        st.subheader("Sentiment140")
-        img_path = OUTPUTS / "sentiment140" / "class_distribution.png"
+        st.subheader("Mental Health Corpus (4-class mood)")
+        img_path = OUTPUTS / "mental_health" / "class_distribution.png"
         if img_path.exists():
             st.image(str(img_path), use_container_width=True)
         else:
-            st.info("Run `python notebooks/eda_sentiment140.py` to generate plots.")
+            st.info("Run notebook `01_eda_mental_health.ipynb` to generate plots.")
 
-        img_path = OUTPUTS / "sentiment140" / "tweet_length_boxplot.png"
+        img_path = OUTPUTS / "mental_health" / "text_length_histogram.png"
         if img_path.exists():
             st.image(str(img_path), use_container_width=True)
 
@@ -128,15 +126,15 @@ def render_dataset_stats():
 
     # Log-odds ratio
     st.subheader("Top Features — Log-Odds Ratio")
-    img_path = OUTPUTS / "sentiment140" / "log_odds_ratio.png"
+    img_path = OUTPUTS / "mental_health" / "log_odds_ratio.png"
     if img_path.exists():
         st.image(str(img_path), use_container_width=True)
 
     # Linguistic features table
     stats = load_dataset_stats()
-    if "sentiment140_linguistic" in stats:
-        st.subheader("Linguistic Features Comparison")
-        st.dataframe(stats["sentiment140_linguistic"], use_container_width=True)
+    if "mental_health_linguistic" in stats:
+        st.subheader("Linguistic Features Comparison (4-class)")
+        st.dataframe(stats["mental_health_linguistic"], use_container_width=True)
 
     if "suicide_watch_markers" in stats:
         st.subheader("Psycholinguistic Markers (Mann-Whitney U)")

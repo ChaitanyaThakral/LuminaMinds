@@ -13,3 +13,4 @@ transformers-interpret>=0.10
 pytest>=8.0
 pytest-cov>=5.0
 pytest-mock>=3.14
+statsmodels>=0.14

@@ -34,10 +34,10 @@ def load_dataset_stats() -> dict:
     """Load precomputed dataset statistics."""
     stats = {}
 
-    # Sentiment140
-    s140_dist_path = OUTPUTS_DIR / "sentiment140" / "linguistic_features.csv"
-    if s140_dist_path.exists():
-        stats["sentiment140_linguistic"] = pd.read_csv(s140_dist_path, index_col=0)
+    # Mental Health Corpus
+    mh_dist_path = OUTPUTS_DIR / "mental_health" / "linguistic_features.csv"
+    if mh_dist_path.exists():
+        stats["mental_health_linguistic"] = pd.read_csv(mh_dist_path, index_col=0)
 
     # Suicide Watch
     sw_psych_path = OUTPUTS_DIR / "suicide_watch" / "psycholinguistic_markers.csv"
@@ -45,7 +45,7 @@ def load_dataset_stats() -> dict:
         stats["suicide_watch_markers"] = pd.read_csv(sw_psych_path)
 
     # Log-odds
-    lor_path = OUTPUTS_DIR / "sentiment140" / "log_odds_ratio.csv"
+    lor_path = OUTPUTS_DIR / "mental_health" / "log_odds_ratio.csv"
     if lor_path.exists():
         stats["log_odds"] = pd.read_csv(lor_path)
 
