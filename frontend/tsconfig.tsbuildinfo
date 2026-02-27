@@ -1,0 +1,1 @@
+{"root":["./src/app.tsx","./src/main.tsx","./src/vite-env.d.ts","./src/components/disclaimer.tsx","./src/components/layout.tsx","./src/components/micicon.tsx","./src/pages/home.tsx","./src/pages/resources.tsx","./src/pages/textchat.tsx","./src/pages/voicechat.tsx"],"version":"5.6.3"}

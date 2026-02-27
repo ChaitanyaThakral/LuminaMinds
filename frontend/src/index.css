@@ -1,0 +1,16 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply text-gray-800 antialiased;
+    font-feature-settings: "kern" 1, "liga" 1;
+  }
+}
+
+@layer components {
+  .lumina-card {
+    @apply rounded-2xl bg-white/80 backdrop-blur-sm shadow-soft border border-lumina-warm/30;
+  }
+}
